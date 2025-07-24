@@ -17,7 +17,6 @@ class FootballGuess():
         self.options.add_argument("--ignore-ssl-errors")
         self.service=Service(ChromeDriverManager().install())
         self.browser=webdriver.Chrome(service=self.service,options=self.options)
-        self.new_champion=""
         self.url="https://arsiv.mackolik.com/Standings/Default.aspx?sId="
         self.wait=WebDriverWait(self.browser,10)
 
@@ -51,7 +50,6 @@ class FootballGuess():
 
             season_name=options[season_idx].text.strip()
             options[season_idx].click()
-            time.sleep(3)
 
             self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR,"tbody tr")))
             teams=self.browser.find_elements(By.CSS_SELECTOR,"tbody tr")
@@ -124,8 +122,8 @@ class FootballGuess():
         fifth_point_average//=5
 
         guess_scores2={}
-        for i,season_data in enumerate(data_3D):
-            for team_idx,team_data in enumerate(season_data):
+        for season_data in data_3D:
+            for team_data in season_data:
                 name=team_data[1]
                 point=int(team_data[2])
 
@@ -152,11 +150,11 @@ class FootballGuess():
             final_scores[team_n]=final_scores.get(team_n,0)+score
 
         sorted_final = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
-        for x,(a,b) in enumerate(sorted_final,start=1):
-            if x==1:
-                print(f"predicted champion: {a}")
+        for sort,(sorted_team,_) in enumerate(sorted_final,start=1):
+            if sort==1:
+                print(f"predicted champion: {sorted_team}")
             else:
-                print(a)
+                print(sorted_team)
 
 
 guess=FootballGuess()
