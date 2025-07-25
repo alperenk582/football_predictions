@@ -61,6 +61,7 @@ class FootballGuess():
                 if name_links and point_links:
                     team_name=name_links[0].text.strip()
                     team_point=point_links[9].text.strip()
+                    team_point=int(team_point) if team_point.isdigit() else 0
 
                     team_points.append(team_point)
 
@@ -76,10 +77,11 @@ class FootballGuess():
         seasons_uniqe=np.unique(guess_arr[:,0])[::-1]
         season_points=[]
         grouped=[]
-        for season in seasons_uniqe:
+        for season in seasons_uniqe:                                  
             season_rows=guess_arr[guess_arr[:,0]==season]
             grouped.append(season_rows)
-            season_points.append(season_rows[:,2].astype(int))
+            points=np.where(season_rows[:,2] == "", "0", season_rows[:,2]).astype(int)
+            season_points.append(points)
 
         # check for diffrent team numbers in the league
         filled=[]
@@ -88,7 +90,7 @@ class FootballGuess():
             team_num=sr.shape[0]
             if team_num < max_team_num:
                 diff=max_team_num - team_num
-                fill=np.array([["","","0"]] * diff)
+                fill=np.array([["","",0]] * diff,dtype=object)
                 sr=np.vstack([sr,fill])
             filled.append(sr)
 
@@ -96,7 +98,7 @@ class FootballGuess():
 
         champions=data_3D[:,0,1]
      
-        guess_points_champ=[2.5,2,1.5,1,0.5]
+        guess_points_champ=[3,2.5,2,1.5,1]
         guess_scores={}
         for indx,champ in enumerate(champions):
             guess_point=guess_points_champ[indx]
@@ -128,34 +130,36 @@ class FootballGuess():
                 point=int(team_data[2])
 
                 if champ_point_average+5 >= point >= champ_point_average-3:
-                    guess_scores2[name]=guess_scores2.get(name,0) + 3.5
-
-                elif second_point_average+3 >= point >= second_point_average-4:
-                    guess_scores2[name]=guess_scores2.get(name,0)+3
-
-                elif third_point_average+4 >= point >= third_point_average-2:
-                    guess_scores2[name]=guess_scores2.get(name,0)+2.5
-
-                elif fourth_point_average+3 >= point >= fourth_point_average-1:
                     guess_scores2[name]=guess_scores2.get(name,0) + 2
 
+                elif second_point_average+3 >= point >= second_point_average-4:
+                    guess_scores2[name]=guess_scores2.get(name,0)+1.7
+
+                elif third_point_average+4 >= point >= third_point_average-2:
+                    guess_scores2[name]=guess_scores2.get(name,0)+1.5
+
+                elif fourth_point_average+3 >= point >= fourth_point_average-1:
+                    guess_scores2[name]=guess_scores2.get(name,0) + 1
+
                 elif fifth_point_average+2 >= point >= fifth_point_average-5:
-                    guess_scores2[name]=guess_scores2.get(name,0) + 1.5
-
+                    guess_scores2[name]=guess_scores2.get(name,0) + 0.5
+                    
         final_scores={}
-        for team_n,scroe in guess_scores.items():
-            final_scores[team_n]=final_scores.get(team_n,0)+scroe
-
-        for team_n,score in guess_scores2.items():
-            final_scores[team_n]=final_scores.get(team_n,0)+score
+        all_teams=set(guess_scores.keys()) | set(guess_scores2.keys())
+        for team in all_teams:
+            score1=guess_scores.get(team,0)
+            score2=guess_scores2.get(team,0)
+            total_score=(score1*0.6)+(score2*0.4)
+            final_scores[team]=total_score
 
         sorted_final = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
-        for sort,(sorted_team,_) in enumerate(sorted_final,start=1):
+        for sort,(sorted_team,guess_point) in enumerate(sorted_final,start=1):
             if sort==1:
-                print(f"predicted champion: {sorted_team}")
+                print(f"{sorted_team}, posibility to be champion: {guess_point} out of 10")
+            elif sort==6:
+                break
             else:
-                print(sorted_team)
-
+                print(f"{sorted_team}, posibility to be champion: {guess_point} out of 10")
 
 guess=FootballGuess()
 while True:
